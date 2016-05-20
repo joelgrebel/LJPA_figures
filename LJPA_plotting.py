@@ -37,6 +37,8 @@ class Trends(object):
 
         inputs = ''
         for name, value in zip(names, values):
+            if inputs != '':
+                inputs += ','
             if name == 'C':
                 C = ' C = {:.1f} pF '.format(value/1e-12)
                 inputs += C
@@ -184,7 +186,7 @@ class Trends(object):
         ax.set_title(self.format_amp_inputs(block=['phi_s', 'theta_p', 'phi_dc']))
         return fig
 
-    def phi_dc_f0_2d_plot(self, xmin=-0.05, xmax = 0.3,
+    def phi_dc_f0_gain_plot(self, xmin=-0.05, xmax = 0.3,
                             ymin=5, ymax=10,
                             pointsx=1e2, pointsy=1e2):
         """
@@ -224,4 +226,49 @@ class Trends(object):
         ax.set_xlabel('$\Phi_{DC} (\phi_0)$',fontsize=18)
         ax.set_ylabel('Frequency (GHz)',fontsize=18)
         ax.set_title(self.format_amp_inputs(block=['phi_s', 'theta_p', 'phi_dc']))
+        return fig
+
+    def phi_dc_phi_ac_gain_plot(self, freq = 6., xmin=0.1, xmax = 0.4,
+                            ymin=0.01, ymax=0.3,
+                            pointsx=1e2, pointsy=1e2):
+        """
+        Return a figure with a 2d temperature plot showing how the gain varies
+        with phi_ac and phi_dc
+
+        Parameters
+        ----------
+        freq : float, optional
+            frequency of measurement in GHz
+        xmin : float, optional
+            minimum plotted phi_dc in Weber
+        xmax : float, optional
+            maximum plotted phi_dc in Weber
+        pointsx : float, optional
+            number of plotted phi_dc points
+        pointsy : float, optional
+            number of plotted frequency points
+        """
+        phi_dc = np.linspace(xmin, xmax, pointsx)
+        phi_ac = np.linspace(ymin, ymax, pointsy)
+        gain =[]
+        for amp_ac in phi_ac:
+            for amp_dc in phi_dc:
+                self.amp.phi_dc = amp_dc
+                self.amp.phi_ac = amp_ac
+                g = 10*np.log10(abs(self.amp.reflection(freq*1e9))**2.)
+                gain.append(g)
+
+        gain = np.flipud(np.asarray(gain).reshape((pointsy,pointsx)))
+
+        fig = plt.subplots(figsize = (8,5))
+        ax = plt.subplot(1,1,1)
+        aspect = (xmax - xmin)/(ymax - ymin)
+        p = ax.imshow(gain, cmap=plt.get_cmap('plasma'), interpolation='none',
+                        extent=[xmin,xmax,ymin,ymax], aspect=aspect)
+        plt.colorbar(p).set_label(label='Gain',size=18)
+
+        plt.xlabel('$\Phi_{DC} (\phi_0)$',fontsize=18)
+        plt.ylabel('$\Phi_{AC}(\phi_0)$',fontsize=18)
+        plt.title(self.format_amp_inputs(block=['phi_s','theta_p', 'phi_ac',
+                                                'phi_dc']) + ', f = {0} GHz'.format(freq))
         return fig
