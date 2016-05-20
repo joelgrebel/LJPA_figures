@@ -204,6 +204,7 @@ class Trends(object):
         pointsy : float, optional
             number of plotted frequency points
         """
+        backup_phi_dc = self.amp.phi_dc
         phi_dc = np.linspace(xmin,xmax,pointsx)
         f = np.linspace(ymin,ymax,pointsy)
         gain =[]
@@ -212,7 +213,8 @@ class Trends(object):
                 self.amp.phi_dc = mag
                 g = 10*np.log10(abs(self.amp.reflection(freq*1e9))**2.)
                 gain.append(g)
-
+        self.amp.phi_dc = backup_phi_dc
+        
         gain = np.flipud(np.asarray(gain).reshape((pointsy,pointsx)))
 
         fig = plt.subplots(figsize = (8,5))
@@ -246,8 +248,10 @@ class Trends(object):
         pointsx : float, optional
             number of plotted phi_dc points
         pointsy : float, optional
-            number of plotted frequency points
+            number of plotted phi_ac points
         """
+        backup_phi_dc = self.amp.phi_dc
+        backup_phi_ac = self.amp.phi_ac
         phi_dc = np.linspace(xmin, xmax, pointsx)
         phi_ac = np.linspace(ymin, ymax, pointsy)
         gain =[]
@@ -257,6 +261,8 @@ class Trends(object):
                 self.amp.phi_ac = amp_ac
                 g = 10*np.log10(abs(self.amp.reflection(freq*1e9))**2.)
                 gain.append(g)
+        self.amp.phi_dc = backup_phi_dc
+        self.amp.phi_ac = backup_phi_ac
 
         gain = np.flipud(np.asarray(gain).reshape((pointsy,pointsx)))
 
