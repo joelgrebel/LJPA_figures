@@ -236,7 +236,7 @@ class Trends(object):
         plt.colorbar(p).set_label(label='Gain (dB)',size=18)
 
         ax.set_xlabel('$\Phi_{DC} (\phi_0)$',fontsize=18)
-        ax.set_ylabel('Frequency (GHz)',fontsize=18)
+        ax.set_ylabel('Signal Frequency (GHz)',fontsize=18)
         ax.set_title(self.format_amp_inputs(block=['phi_s', 'theta_p', 'phi_dc']))
         return fig
 
