@@ -52,17 +52,17 @@ class Trends(object):
                 phi_s = ' $\Phi_s$ = {:0.2f} rad '.format(value)
                 inputs += phi_s
             elif name == 'phi_dc':
-                phi_dc = ' $\Phi_{{dc}}$ = {:0.2f} $\phi_0$ Wb '.format(value)
+                phi_dc = ' $\Phi_{{dc}}$ = {:0.2f} $\phi_0$ '.format(value)
                 inputs += phi_dc
             elif name == 'phi_ac':
-                phi_ac = ' $\Phi_{{ac}}$ = {:0.2f} $\phi_0$ Wb '.format(value)
+                phi_ac = ' $\Phi_{{ac}}$ = {:0.2f} $\phi_0$ '.format(value)
                 inputs += phi_ac
             elif name == 'theta_p':
                 theta_p = ' $ \theta_p$ = {:0.2f} rad '.format(value)
                 inputs += theta_p
         return inputs
 
-    def resonance_plot(self, span=8e9, redline=False):
+    def resonance_plot(self, span=8e9, redline=False, xlim=None):
         """
         Return a figure with two plots showing the amplifier real impedance vs.
         frequency and imaginary impedance vs. frequency.
@@ -74,10 +74,17 @@ class Trends(object):
         redline : bool, optional
             If true shows lines at 50 ohms real impedance and 0 ohms imaginary
             impedance.
+        xlim : list, optional
+            two value list [xmin, xmax] to specify plot limits. If None, the
+            function plots a span around the resonance frequency.
         """
-        f0 = self.amp.resonance_frequency()
-        fmin = (f0 - span/2)/1e9
-        fmax = (f0 + span/2)/1e9
+        if not xlim:
+            f0 = self.amp.resonance_frequency()
+            fmin = (f0 - span/2)/1e9
+            fmax = (f0 + span/2)/1e9
+        else:
+            fmin = xlim[0]
+            fmax = xlim[1]
         f = np.linspace(fmin,fmax,1e3)
         real_impedance = np.real(self.amp.impedance(f*1e9))
         imag_impedance = np.imag(self.amp.impedance(f*1e9))
@@ -188,7 +195,8 @@ class Trends(object):
 
     def phi_dc_f0_gain_plot(self, xmin=-0.05, xmax = 0.3,
                             ymin=5, ymax=10,
-                            pointsx=1e2, pointsy=1e2):
+                            pointsx=1e2, pointsy=1e2,
+                            maxgain=None):
         """
         Return a figure with a 2d temperature plot showing how the gain varies
         with frequency and phi_dc
@@ -203,6 +211,8 @@ class Trends(object):
             number of plotted phi_dc points
         pointsy : float, optional
             number of plotted frequency points
+        maxgain : float, optional
+            maximum gain plotted. If None data values determine the range
         """
         backup_phi_dc = self.amp.phi_dc
         phi_dc = np.linspace(xmin,xmax,pointsx)
@@ -214,7 +224,7 @@ class Trends(object):
                 g = 10*np.log10(abs(self.amp.reflection(freq*1e9))**2.)
                 gain.append(g)
         self.amp.phi_dc = backup_phi_dc
-        
+
         gain = np.flipud(np.asarray(gain).reshape((pointsy,pointsx)))
 
         fig = plt.subplots(figsize = (8,5))
@@ -222,8 +232,8 @@ class Trends(object):
 
         aspect = (xmax - xmin)/(ymax - ymin)
         p = ax.imshow(gain, cmap=plt.get_cmap('plasma'), interpolation='none',
-                        extent=[xmin,xmax,ymin,ymax], aspect=aspect)
-        plt.colorbar(p).set_label(label='Gain',size=18)
+                        extent=[xmin,xmax,ymin,ymax], aspect=aspect, vmax=maxgain)
+        plt.colorbar(p).set_label(label='Gain (dB)',size=18)
 
         ax.set_xlabel('$\Phi_{DC} (\phi_0)$',fontsize=18)
         ax.set_ylabel('Frequency (GHz)',fontsize=18)
