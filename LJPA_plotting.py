@@ -43,22 +43,22 @@ class Trends(object):
                 C = ' C = {:.1f} pF '.format(value/1e-12)
                 inputs += C
             elif name == 'L_s':
-                L_s = ' $L_s$ = {:.1f} pH '.format(value/1e-12)
+                L_s = ' $\text{{L}}_\text{{s}}$ = {:.1f} pH '.format(value/1e-12)
                 inputs += L_s
             elif name == 'I_c':
-                I_c = ' $I_c$ = {:0.2f} $\mu$A '.format(value/1e-6)
+                I_c = ' $\text{{I}}_\text{{c}}$ = {:0.2f} $\mu$A '.format(value/1e-6)
                 inputs += I_c
             elif name == 'phi_s':
-                phi_s = ' $\Phi_s$ = {:0.2f} rad '.format(value)
+                phi_s = ' $\Phi_\text{{s}}$ = {:0.2f} rad '.format(value)
                 inputs += phi_s
             elif name == 'phi_dc':
-                phi_dc = ' $\Phi_{{dc}}$ = {:0.2f} $\phi_0$ '.format(value)
+                phi_dc = ' $\Phi_\text{{dc}}$ = {:0.2f} $\phi_0$ '.format(value)
                 inputs += phi_dc
             elif name == 'phi_ac':
-                phi_ac = ' $\Phi_{{ac}}$ = {:0.2f} $\phi_0$ '.format(value)
+                phi_ac = ' $\Phi_\text{{ac}}$ = {:0.2f} $\phi_0$ '.format(value)
                 inputs += phi_ac
             elif name == 'theta_p':
-                theta_p = ' $ \theta_p$ = {:0.2f} rad '.format(value)
+                theta_p = ' $ \theta_\text{{p}}$ = {:0.2f} rad '.format(value)
                 inputs += theta_p
         return inputs
 
@@ -196,7 +196,7 @@ class Trends(object):
     def phi_dc_f0_gain_plot(self, xmin=-0.05, xmax = 0.3,
                             ymin=5, ymax=10,
                             pointsx=1e2, pointsy=1e2,
-                            maxgain=None):
+                            vmax=None):
         """
         Return a figure with a 2d temperature plot showing how the gain varies
         with frequency and phi_dc
@@ -211,7 +211,7 @@ class Trends(object):
             number of plotted phi_dc points
         pointsy : float, optional
             number of plotted frequency points
-        maxgain : float, optional
+        vmax : float, optional
             maximum gain plotted. If None data values determine the range
         """
         backup_phi_dc = self.amp.phi_dc
@@ -232,7 +232,7 @@ class Trends(object):
 
         aspect = (xmax - xmin)/(ymax - ymin)
         p = ax.imshow(gain, cmap=plt.get_cmap('plasma'), interpolation='none',
-                        extent=[xmin,xmax,ymin,ymax], aspect=aspect, vmax=maxgain)
+                        extent=[xmin,xmax,ymin,ymax], aspect=aspect, vmax=vmax)
         plt.colorbar(p).set_label(label='Gain (dB)',size=18)
 
         ax.set_xlabel('$\Phi_{DC} (\phi_0)$',fontsize=18)
@@ -243,7 +243,7 @@ class Trends(object):
     def phi_dc_phi_ac_gain_plot(self, freq = 6., xmin=0.1, xmax = 0.4,
                             ymin=0.01, ymax=0.3,
                             pointsx=1e2, pointsy=1e2,
-                            maxgain=None):
+                            vmax=None):
         """
         Return a figure with a 2d temperature plot showing how the gain varies
         with phi_ac and phi_dc
@@ -260,7 +260,7 @@ class Trends(object):
             number of plotted phi_dc points
         pointsy : float, optional
             number of plotted phi_ac points
-        maxgain : float, optional
+        vmax : float, optional
             maximum gain plotted. If None data values determine the range
         """
         backup_phi_dc = self.amp.phi_dc
@@ -283,9 +283,7 @@ class Trends(object):
         ax = plt.subplot(1,1,1)
         aspect = (xmax - xmin)/(ymax - ymin)
         p = ax.imshow(gain, cmap=plt.get_cmap('plasma'), interpolation='none',
-                        extent=[xmin,xmax,ymin,ymax], aspect=aspect, vmax=maxgain)
-        # cs = plt.contour(np.flipud(gain), 6,extent = [xmin,xmax,ymin,ymax])
-        # plt.clabel(cs, inline=1, colors='k', fontsize=10)
+                        extent=[xmin,xmax,ymin,ymax], aspect=aspect, vmax=vmax)
         plt.colorbar(p).set_label(label='Gain (dB)',size=18)
 
         plt.xlabel('$\Phi_{DC} (\phi_0)$',fontsize=18)
@@ -311,8 +309,6 @@ class Trends(object):
             number of plotted phi_dc points
         pointsy : float, optional
             number of plotted frequency points
-        maxgain : float, optional
-            maximum gain plotted. If None data values determine the range
         """
         backup_phi_dc = self.amp.phi_dc
         phi_dc = np.linspace(xmin,xmax,pointsx)
@@ -333,7 +329,7 @@ class Trends(object):
 
         aspect = (xmax - xmin)/(ymax - ymin)
 
-        p = ax.imshow(phase, interpolation='none', cmap='plasma',
+        p = ax.imshow(phase, interpolation='none', cmap='seismic',
                         extent=[xmin,xmax,ymin,ymax], aspect=aspect)
         plt.colorbar(p).set_label(label='Phase(rad)',size=18)
 
@@ -384,9 +380,191 @@ class Trends(object):
         p = ax.imshow(bw, cmap=plt.get_cmap('plasma'), interpolation='none',
                         extent=[xmin,xmax,ymin,ymax], aspect=aspect, vmax=vmax)
         cs = plt.contour(np.flipud(bw), levels=[50], extent=[xmin,xmax,ymin,ymax],
-                    colors='r',)
-        plt.clabel(cs,inline=1, fontsize=10, fmt='%.0f' )
+                    colors='w',)
+        # plt.clabel(cs,inline=1, fontsize=10, fmt='%.0f' )
         plt.colorbar(p).set_label(label='Bandwidth (MHz)',size=18)
+
+        plt.xlabel('$\Phi_{DC} (\phi_0)$',fontsize=18)
+        plt.ylabel('$\Phi_{AC}(\phi_0)$',fontsize=18)
+        plt.title(self.format_amp_inputs(block=['phi_s','theta_p', 'phi_ac',
+                                                'phi_dc']))
+        return fig
+    def phi_dc_phi_ac_gain_bandwidthcontours_plot(self, freq = 6., xmin=0.1, xmax = 0.4,
+                            ymin=0.01, ymax=0.3,
+                            pointsx=1e2, pointsy=1e2,
+                            vmax=None):
+        """
+        Return a figure with a 2d temperature plot showing how the gain varies
+        with phi_ac and phi_dc
+
+        Parameters
+        ----------
+        freq : float, optional
+            frequency of measurement in GHz
+        xmin : float, optional
+            minimum plotted phi_dc in Weber
+        xmax : float, optional
+            maximum plotted phi_dc in Weber
+        pointsx : float, optional
+            number of plotted phi_dc points
+        pointsy : float, optional
+            number of plotted phi_ac points
+        vmax : float, optional
+            maximum gain plotted. If None data values determine the range
+        """
+        backup_phi_dc = self.amp.phi_dc
+        backup_phi_ac = self.amp.phi_ac
+        phi_dc = np.linspace(xmin, xmax, pointsx)
+        phi_ac = np.linspace(ymin, ymax, pointsy)
+        gain =[]
+        bw =[]
+        for amp_ac in phi_ac:
+            for amp_dc in phi_dc:
+                self.amp.phi_dc = amp_dc
+                self.amp.phi_ac = amp_ac
+                g = 10*np.log10(abs(self.amp.reflection(freq*1e9))**2.)
+                bandwidth = self.amp.find_reflection_fwhm()/1e6
+                gain.append(g)
+                bw.append(bandwidth)
+        self.amp.phi_dc = backup_phi_dc
+        self.amp.phi_ac = backup_phi_ac
+
+        gain = np.flipud(np.asarray(gain).reshape((pointsy,pointsx)))
+        bw = np.flipud(np.asarray(bw).reshape((pointsy,pointsx)))
+
+        fig = plt.subplots(figsize = (8,5))
+        ax = plt.subplot(1,1,1)
+        aspect = (xmax - xmin)/(ymax - ymin)
+        p = ax.imshow(gain, cmap=plt.get_cmap('plasma'), interpolation='none',
+                        extent=[xmin,xmax,ymin,ymax], aspect=aspect, vmax=vmax)
+        cs = plt.contour(np.flipud(bw), levels=[50], extent=[xmin,xmax,ymin,ymax],
+                    colors='w',)
+        plt.colorbar(p).set_label(label='Gain (dB)',size=18)
+
+        plt.xlabel('$\Phi_{DC} (\phi_0)$',fontsize=18)
+        plt.ylabel('$\Phi_{AC}(\phi_0)$',fontsize=18)
+        plt.title(self.format_amp_inputs(block=['phi_s','theta_p', 'phi_ac',
+                                                'phi_dc']) + ', f = {0} GHz'.format(freq))
+        return fig
+
+    def phi_s_josephson_inductance_line_plot(self, xmin = 0.01, xmax = 1e1,
+                                pointsx = 1e2):
+        """
+        Return a figure with a plot showing the gain vs. phi_ac with
+        all other parameters constant
+
+        Parameters
+        ----------
+        xmin : float, optional
+            minimum plotted phi_ac in Weber
+        xmax : float, optional
+            maximum plotted phi_ac in Weber
+        points : float, optional
+            number of plotted points
+        """
+        backup_phi_s = self.amp.phi_s
+        phi_s = np.linspace(xmin, xmax, pointsx)
+        L_j = []
+        for value in phi_s:
+            self.amp.phi_s = value
+            L_j.append(self.amp.josephson_inductance())
+        self.amp.phi_s = backup_phi_s
+
+        fig = plt.subplots(figsize = (8,5))
+        ax = plt.subplot(1,1,1)
+
+        ax.plot(phi_s, L_j)
+
+        ax.set_xlim([xmin, xmax])
+
+        ax.set_xlabel('$\Phi_s$(rad)', fontsize = 18)
+        ax.set_ylabel('$L_j$(H)', fontsize = 18)
+
+        ax.set_title(self.format_amp_inputs(block=['theta_p','phi_s']), y=1.08)
+        return fig
+
+    def phi_s_pumpistor_inductance_line_plot(self, xmin = 0.01, xmax = 1e1,
+                                pointsx = 1e2):
+        """
+        Return a figure with a plot showing the gain vs. phi_ac with
+        all other parameters constant
+
+        Parameters
+        ----------
+        xmin : float, optional
+            minimum plotted phi_ac in Weber
+        xmax : float, optional
+            maximum plotted phi_ac in Weber
+        points : float, optional
+            number of plotted points
+        """
+        backup_phi_s = self.amp.phi_s
+        phi_s = np.linspace(xmin, xmax, pointsx)
+        L_p_real = []
+        L_p_imag = []
+        for value in phi_s:
+            self.amp.phi_s = value
+            L_p_real.append(np.real(self.amp.pumpistor_inductance()))
+            L_p_imag.append(np.imag(self.amp.pumpistor_inductance()))
+        self.amp.phi_s = backup_phi_s
+
+        fig, (ax1, ax2) = plt.subplots(2, 1,figsize = (7*8./5.,7))
+        ax1.plot(phi_s, L_p_real)
+        ax1.set_xlim([xmin, xmax])
+        ax1.set_ylabel('Real $\text{{L}}_\text{{p}}$(H)', fontsize = 18)
+
+        ax2.plot(phi_s, L_j_imag)
+        ax2.set_xlabel('$\Phi_\text{s}$(rad)', fontsize = 18)
+        ax2.set_ylabel()
+
+        ax.set_title(self.format_amp_inputs(block=['theta_p','phi_s']), y=1.08)
+        return fig
+
+    def phi_dc_phi_ac_L_p_plot(self, freq = 6., xmin=0.01, xmax = 0.5,
+                            ymin=0.01, ymax=0.5,
+                            pointsx=1e2, pointsy=1e2,
+                            vmax=None):
+        """
+        Return a figure with a 2d temperature plot showing how the gain varies
+        with phi_ac and phi_dc
+
+        Parameters
+        ----------
+        freq : float, optional
+            frequency of measurement in GHz
+        xmin : float, optional
+            minimum plotted phi_dc in Weber
+        xmax : float, optional
+            maximum plotted phi_dc in Weber
+        pointsx : float, optional
+            number of plotted phi_dc points
+        pointsy : float, optional
+            number of plotted phi_ac points
+        """
+        backup_phi_dc = self.amp.phi_dc
+        backup_phi_ac = self.amp.phi_ac
+        phi_dc = np.linspace(xmin, xmax, pointsx)
+        phi_ac = np.linspace(ymin, ymax, pointsy)
+        lp =[]
+        for amp_ac in phi_ac:
+            for amp_dc in phi_dc:
+                self.amp.phi_dc = amp_dc
+                self.amp.phi_ac = amp_ac
+                pumpistor_inductance = abs(self.amp.pumpistor_inductance())
+                lp.append(pumpistor_inductance)
+        self.amp.phi_dc = backup_phi_dc
+        self.amp.phi_ac = backup_phi_ac
+
+        lp = np.flipud(np.asarray(lp).reshape((pointsy,pointsx)))
+        fig = plt.subplots(figsize = (8,5))
+        ax = plt.subplot(1,1,1)
+        aspect = (xmax - xmin)/(ymax - ymin)
+        p = ax.imshow(lp, cmap=plt.get_cmap('plasma'), interpolation='none',
+                        extent=[xmin,xmax,ymin,ymax], aspect=aspect, vmax=vmax)
+        # cs = plt.contour(np.flipud(bw), levels=[50], extent=[xmin,xmax,ymin,ymax],
+        #             colors='w',)
+        # plt.clabel(cs,inline=1, fontsize=10, fmt='%.0f' )
+        plt.colorbar(p).set_label(label='$|L_p|$(H)',size=18)
 
         plt.xlabel('$\Phi_{DC} (\phi_0)$',fontsize=18)
         plt.ylabel('$\Phi_{AC}(\phi_0)$',fontsize=18)
