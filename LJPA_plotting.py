@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
+import scipy.constants as cst
 
 class Trends(object):
     """docstring for Trends"""
@@ -43,25 +44,28 @@ class Trends(object):
                 C = ' C = {:.1f} pF '.format(value/1e-12)
                 inputs += C
             elif name == 'L_s':
-                L_s = ' $\text{{L}}_\text{{s}}$ = {:.1f} pH '.format(value/1e-12)
+                L_s = ' $\mathrm{{L}}_\mathrm{{s}}$ = {:.1f} pH '.format(value/1e-12)
                 inputs += L_s
             elif name == 'I_c':
-                I_c = ' $\text{{I}}_\text{{c}}$ = {:0.2f} $\mu$A '.format(value/1e-6)
+                I_c = ' $\mathrm{{I}}_\mathrm{{c}}$ = {:0.2f} $\mu$A '.format(value/1e-6)
                 inputs += I_c
             elif name == 'phi_s':
-                phi_s = ' $\Phi_\text{{s}}$ = {:0.2f} rad '.format(value)
+                phi_s = ' $\Phi_\mathrm{{s}}$ = {:0.2f} rad '.format(value)
                 inputs += phi_s
             elif name == 'phi_dc':
-                phi_dc = ' $\Phi_\text{{dc}}$ = {:0.2f} $\phi_0$ '.format(value)
+                phi_dc = ' $\Phi_\mathrm{{dc}}$ = {:0.2f} $\phi_0$ '.format(value)
                 inputs += phi_dc
             elif name == 'phi_ac':
-                phi_ac = ' $\Phi_\text{{ac}}$ = {:0.2f} $\phi_0$ '.format(value)
+                phi_ac = ' $\Phi_\mathrm{{ac}}$ = {:0.2f} $\phi_0$ '.format(value)
                 inputs += phi_ac
             elif name == 'theta_p':
-                theta_p = ' $ \theta_\text{{p}}$ = {:0.2f} rad '.format(value)
+                theta_p = ' $ \theta_\mathrm{{p}}$ = {:0.2f} rad '.format(value)
                 inputs += theta_p
         return inputs
 
+    def power(self, phi_s, freq):
+        average_v_squared = 0.5*(cst.h/2./cst.e)**2*phi_s**2*freq**2
+        power = 10*np.log10(average_v_squared/abs(self.amp.squid_impedance(freq))/0.001)
     def resonance_plot(self, span=8e9, redline=False, xlim=None):
         """
         Return a figure with two plots showing the amplifier real impedance vs.
@@ -448,7 +452,7 @@ class Trends(object):
         return fig
 
     def phi_s_josephson_inductance_line_plot(self, xmin = 0.01, xmax = 1e1,
-                                pointsx = 1e2):
+                                pointsx = 1e2, freq=6e9):
         """
         Return a figure with a plot showing the gain vs. phi_ac with
         all other parameters constant
@@ -464,30 +468,35 @@ class Trends(object):
         """
         backup_phi_s = self.amp.phi_s
         phi_s = np.linspace(xmin, xmax, pointsx)
+
         L_j = []
+        power = []
         for value in phi_s:
             self.amp.phi_s = value
             L_j.append(self.amp.josephson_inductance())
+            average_v_squared = 0.5*(cst.h/2./cst.e)**2*value**2*freq**2
+            p = 10*np.log10(average_v_squared/abs(self.amp.squid_impedance(freq))/0.001)
+            power.append(p)
         self.amp.phi_s = backup_phi_s
+
+
 
         fig = plt.subplots(figsize = (8,5))
         ax = plt.subplot(1,1,1)
+        print 'max power =  ', max(power)
+        ax.plot(power, L_j)
 
-        ax.plot(phi_s, L_j)
+        ax.set_xlim([power[0], power[-1]])
 
-        ax.set_xlim([xmin, xmax])
+        ax.set_xlabel('Signal Power (dBm)', fontsize = 18)
+        ax.set_ylabel('$\mathrm{{L}}_\mathrm{{j}}$(H)', fontsize = 18)
 
-        ax.set_xlabel('$\Phi_s$(rad)', fontsize = 18)
-        ax.set_ylabel('$L_j$(H)', fontsize = 18)
-
-        ax.set_title(self.format_amp_inputs(block=['theta_p','phi_s']), y=1.08)
+        ax.set_title(self.format_amp_inputs(block=['theta_p','phi_s']) + ', f = {0} GHz'.format(freq/1e9), y=1.03)
         return fig
 
     def phi_s_pumpistor_inductance_line_plot(self, xmin = 0.01, xmax = 1e1,
-                                pointsx = 1e2):
+                                pointsx = 1e2, freq=6e9):
         """
-        Return a figure with a plot showing the gain vs. phi_ac with
-        all other parameters constant
 
         Parameters
         ----------
@@ -500,24 +509,30 @@ class Trends(object):
         """
         backup_phi_s = self.amp.phi_s
         phi_s = np.linspace(xmin, xmax, pointsx)
+
         L_p_real = []
         L_p_imag = []
+        power = []
         for value in phi_s:
             self.amp.phi_s = value
             L_p_real.append(np.real(self.amp.pumpistor_inductance()))
             L_p_imag.append(np.imag(self.amp.pumpistor_inductance()))
+            average_v_squared = 0.5*(cst.h/2./cst.e)**2*value**2*freq**2
+            p = 10*np.log10(average_v_squared/abs(self.amp.squid_impedance(freq))/0.001)
+            power.append(p)
         self.amp.phi_s = backup_phi_s
 
         fig, (ax1, ax2) = plt.subplots(2, 1,figsize = (7*8./5.,7))
-        ax1.plot(phi_s, L_p_real)
-        ax1.set_xlim([xmin, xmax])
-        ax1.set_ylabel('Real $\text{{L}}_\text{{p}}$(H)', fontsize = 18)
+        ax1.plot(power, L_p_real)
+        ax1.set_xlim([power[0], power[-1]])
+        ax1.set_ylabel(r'Real $\mathrm{{L}}_\mathrm{{p}}$(H)', fontsize = 18)
 
-        ax2.plot(phi_s, L_j_imag)
-        ax2.set_xlabel('$\Phi_\text{s}$(rad)', fontsize = 18)
-        ax2.set_ylabel()
+        ax2.plot(power, L_p_imag)
+        ax2.set_xlim([power[0], power[-1]])
+        ax2.set_xlabel('Signal Power (dBm)', fontsize = 18)
+        ax2.set_ylabel('Imaginary $\mathrm{{L}}_\mathrm{{p}}$(H)', fontsize = 18)
 
-        ax.set_title(self.format_amp_inputs(block=['theta_p','phi_s']), y=1.08)
+        ax1.set_title(self.format_amp_inputs(block=['theta_p','phi_s']) + ', f = {0} GHz'.format(freq/1e9), y=1.08)
         return fig
 
     def phi_dc_phi_ac_L_p_plot(self, freq = 6., xmin=0.01, xmax = 0.5,
@@ -525,7 +540,7 @@ class Trends(object):
                             pointsx=1e2, pointsy=1e2,
                             vmax=None):
         """
-        Return a figure with a 2d temperature plot showing how the gain varies
+        Return a figure with a 2d temperature plot showing how L_p varies
         with phi_ac and phi_dc
 
         Parameters
@@ -570,4 +585,117 @@ class Trends(object):
         plt.ylabel('$\Phi_{AC}(\phi_0)$',fontsize=18)
         plt.title(self.format_amp_inputs(block=['phi_s','theta_p', 'phi_ac',
                                                 'phi_dc']))
+        return fig
+
+    def gain_vs_power_freq_plot(self, xmin=0.01, xmax = 10.,
+                            ymin=4., ymax=10.,
+                            pointsx=1e2, pointsy=1e2,
+                            vmax=None):
+        """
+        Return a figure with a 2d temperature plot showing how the gain varies
+        with power and phi_dc
+
+        Parameters
+        ----------
+        xmin : float, optional
+            minimum plotted phi_s in radians
+        xmax : float, optional
+            maximum plotted phi_s in radians
+        ymin : float, optional
+            minimum plotted frequency in GHz
+        ymax : float, optional
+            maximum plotted frequency in GHz
+        pointsx : float, optional
+            number of plotted phi_dc points
+        pointsy : float, optional
+            number of plotted phi_ac points
+        vmax : float, optional
+            maximum gain plotted. If None data values determine the range
+        """
+        backup_phi_s = self.amp.phi_s
+        phi_s = np.linspace(xmin, xmax, pointsx)
+        freq = np.linspace(ymin, ymax, pointsy)
+        power = []
+        gain =[]
+        for f in freq:
+            for value in phi_s:
+                average_v_squared = 0.5*(cst.h/2./cst.e)**2*value**2*(f*1e9)**2
+                self.amp.phi_s = value
+                g = 10*np.log10(abs(self.amp.reflection(f*1e9))**2.)
+                p = 10*np.log10(average_v_squared/abs(self.amp.squid_impedance(float(f)*1e9))/0.001)
+                power.append(p)
+                gain.append(g)
+        self.amp.phi_s = backup_phi_s
+
+        gain = np.flipud(np.asarray(gain).reshape((pointsy,pointsx)))
+
+        fig = plt.subplots(figsize = (8,5))
+        ax = plt.subplot(1,1,1)
+        aspect = (power[-1] - power[0])/(ymax - ymin)
+        p = ax.imshow(gain, cmap=plt.get_cmap('plasma'), interpolation='none',
+                        extent=[power[0],power[-1],ymin,ymax], aspect=aspect, vmax=vmax)
+        plt.colorbar(p).set_label(label='Gain (dB)',size=18)
+
+        plt.xlabel('Power (dBm)',fontsize=18)
+        plt.ylabel('Frequency (GHz)',fontsize=18)
+        plt.title(self.format_amp_inputs(block=['phi_s','theta_p']))
+        return fig
+
+    def phi_dc_phi_ac_impedance_plot(self, freq = 6., xmin=0.01, xmax = 0.5,
+                            ymin=0.01, ymax=0.5,
+                            pointsx=1e2, pointsy=1e2,
+                            vmax=None, real=True):
+        """
+        Return a figure with a 2d temperature plot showing how the impedance of
+        the LJPA varies with phi_ac and phi_dc
+
+        Parameters
+        ----------
+        freq : float, optional
+            frequency of measurement in GHz
+        xmin : float, optional
+            minimum plotted phi_dc in Weber
+        xmax : float, optional
+            maximum plotted phi_dc in Weber
+        pointsx : float, optional
+            number of plotted phi_dc points
+        pointsy : float, optional
+            number of plotted phi_ac points
+        """
+        backup_phi_dc = self.amp.phi_dc
+        backup_phi_ac = self.amp.phi_ac
+        phi_dc = np.linspace(xmin, xmax, pointsx)
+        phi_ac = np.linspace(ymin, ymax, pointsy)
+        ri = []
+        ii = []
+        for amp_ac in phi_ac:
+            for amp_dc in phi_dc:
+                self.amp.phi_dc = amp_dc
+                self.amp.phi_ac = amp_ac
+                real_impedance = np.real(self.amp.impedance(freq*1e9))
+                imag_impedance = np.imag(self.amp.impedance(freq*1e9))
+                ri.append(real_impedance)
+                ii.append(imag_impedance)
+        self.amp.phi_dc = backup_phi_dc
+        self.amp.phi_ac = backup_phi_ac
+
+        ri = np.flipud(np.asarray(ri).reshape((pointsy,pointsx)))
+        ii = np.flipud(np.asarray(ii).reshape((pointsy,pointsx)))
+
+        fig = plt.subplots(figsize = (8,5))
+        ax = plt.subplot(1,1,1)
+        aspect = (xmax - xmin)/(ymax - ymin)
+        if real:
+            p = ax.imshow(ri, cmap=plt.get_cmap('plasma'), interpolation='none',
+                            extent=[xmin,xmax,ymin,ymax], aspect=aspect, vmax=vmax)
+            plt.colorbar(p).set_label(label='Real Impedance (Ohms)',size=18)
+        else:
+            p = ax.imshow(ii, cmap=plt.get_cmap('plasma'), interpolation='none',
+                            extent=[xmin,xmax,ymin,ymax], aspect=aspect, vmax=vmax)
+            plt.colorbar(p).set_label(label='Imaginary Impedance (Ohms)',size=18)
+
+        plt.xlabel('$\Phi_{DC} (\phi_0)$',fontsize=18)
+        plt.ylabel('$\Phi_{AC}(\phi_0)$',fontsize=18)
+        plt.title(self.format_amp_inputs(block=['phi_s','theta_p', 'phi_ac',
+                                                'phi_dc'])+ ', f = {0} GHz'.format(freq), y=1.06)
         return fig
