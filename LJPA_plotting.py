@@ -25,9 +25,9 @@ class Trends(object):
                 'theta_p'
         """
         # Get a list of variables parameters name and value
-        params_name  = ['C','L_s','I_c','phi_s', 'phi_dc', 'phi_ac', 'theta_p']
+        params_name  = ['C','L_s','I_c','phi_s', 'phi_dc', 'phi_ac', 'theta_p','f_p']
         params_value = [self.amp.C, self.amp.L_s, self.amp.I_c, self.amp.phi_s,
-                        self.amp.phi_dc, self.amp.phi_ac, self.amp.theta_p]
+                        self.amp.phi_dc, self.amp.phi_ac, self.amp.theta_p, self.amp.f_p]
 
         values = []
         names  = []
@@ -61,6 +61,12 @@ class Trends(object):
             elif name == 'theta_p':
                 theta_p = ' $ \theta_\mathrm{{p}}$ = {:0.2f} rad '.format(value)
                 inputs += theta_p
+            elif name == 'f_p':
+                if value==None:
+                    f_p = ' $ \mathrm{{f}}_\mathrm{{p}} = 2\mathrm{{f}}_\mathrm{{s}} $'
+                else:
+                    f_p = ' $ \mathrm{{f}}_\mathrm{{p}} = {:0.2f} $ GHz'.format(value/1e9)
+                inputs += f_p
         return inputs
 
     def power(self, phi_s, freq):
@@ -619,23 +625,21 @@ class Trends(object):
         gain =[]
         for f in freq:
             for value in phi_s:
-                average_v_squared = 0.5*(cst.h/2./cst.e)**2*value**2*(f*1e9)**2
+                average_v_squared = 0.5*(cst.h/2./cst.e)**2*value**2*(float(f)*1e9)**2
                 self.amp.phi_s = value
-                g = 10*np.log10(abs(self.amp.reflection(f*1e9))**2.)
+                g = 10*np.log10(abs(self.amp.reflection(float(f)*1e9))**2.)
                 p = 10*np.log10(average_v_squared/abs(self.amp.squid_impedance(float(f)*1e9))/0.001)
                 power.append(p)
                 gain.append(g)
         self.amp.phi_s = backup_phi_s
 
         gain = np.flipud(np.asarray(gain).reshape((pointsy,pointsx)))
-
         fig = plt.subplots(figsize = (8,5))
         ax = plt.subplot(1,1,1)
         aspect = (power[-1] - power[0])/(ymax - ymin)
         p = ax.imshow(gain, cmap=plt.get_cmap('plasma'), interpolation='none',
                         extent=[power[0],power[-1],ymin,ymax], aspect=aspect, vmax=vmax)
         plt.colorbar(p).set_label(label='Gain (dB)',size=18)
-
         plt.xlabel('Power (dBm)',fontsize=18)
         plt.ylabel('Frequency (GHz)',fontsize=18)
         plt.title(self.format_amp_inputs(block=['phi_s','theta_p']))
@@ -698,4 +702,106 @@ class Trends(object):
         plt.ylabel('$\Phi_{AC}(\phi_0)$',fontsize=18)
         plt.title(self.format_amp_inputs(block=['phi_s','theta_p', 'phi_ac',
                                                 'phi_dc'])+ ', f = {0} GHz'.format(freq), y=1.06)
+        return fig
+
+    def f_s_LJPA_impedance_line_plot(self, xmin = 4, xmax = 8, ymin = None, ymax=None,
+                                points = 1e2, real=True, redline=True):
+        """
+        Return a figure with a plot showing the impedance
+        vs. signal frequency with all other parameters constant, including
+        the pump frequency (non-degenerate operation)
+
+        Parameters
+        ----------
+        xmin : float, optional
+            minimum plotted f_s in GHz
+        xmax : float, optional
+            maximum plotted f_s in GHz
+        points : float, optional
+            number of plotted points
+        """
+        backup_phi_ac = self.amp.phi_ac
+        f_s =  np.linspace(xmin, xmax, points)
+        phi_ac = np.linspace(0.04, 0.08,5)
+        ri = []
+        ii = []
+        for value in phi_ac:
+            self.amp.phi_ac = value
+            ri_temp = []
+            ii_temp = []
+            for freq in f_s:
+                real_impedance = np.real(self.amp.impedance(freq*1e9))
+                imag_impedance = np.imag(self.amp.impedance(freq*1e9))
+                ri_temp.append(real_impedance)
+                ii_temp.append(imag_impedance)
+            ri.append(ri_temp)
+            ii.append(ii_temp)
+        self.amp.phi_ac = backup_phi_ac
+
+        fig, ax = plt.subplots(figsize = (8,5))
+
+        if real:
+            if redline and self.amp.f_p != None:
+                # ax.axvline(self.amp.f_p/2e9, color = 'red', linestyle = '--' )
+                ax.axhline(-50, color = 'red', linestyle = '--')
+            for i in np.arange(len(phi_ac)):
+                ax.plot(f_s,ri[i], label = '$\Phi_\mathrm{{AC}}$ = {:0.2f} $\phi_0$'.format(phi_ac[i]))
+            ax.set_ylabel('Real Impedance (Ohms)', fontsize = 18)
+            plt.legend(loc='lower right')
+
+        else:
+            if redline and self.amp.f_p != None:
+                # ax.axvline(self.amp.f_p/2e9, color = 'red', linestyle = '--' )
+                ax.axhline(0, color = 'red', linestyle = '--')
+            for i in np.arange(len(phi_ac)):
+                ax.plot(f_s,ii[i], label = '$\Phi_\mathrm{{AC}}$ = {:0.2f} $\phi_0$'.format(phi_ac[i]))
+            ax.set_ylabel('Imaginary Impedance (Ohms)', fontsize = 18)
+            plt.legend()
+
+
+        ax.set_xlim([xmin,xmax])
+        ax.set_ylim([ymin,ymax])
+        ax.set_xlabel('Signal Frequency (GHz)', fontsize = 18)
+        ax.set_title(self.format_amp_inputs(block=['phi_s', 'theta_p', 'phi_ac']))
+        return fig
+    def f_s_LJPA_gain_line_plot(self, xmin = 4, xmax = 8, ymin = None, ymax=None,
+                                points = 1e2, redline=True):
+        """
+        Return a figure with a plot showing the impedance
+        vs. signal frequency with all other parameters constant, including
+        the pump frequency (non-degenerate operation)
+
+        Parameters
+        ----------
+        xmin : float, optional
+            minimum plotted f_s in GHz
+        xmax : float, optional
+            maximum plotted f_s in GHz
+        points : float, optional
+            number of plotted points
+        """
+        backup_phi_ac = self.amp.phi_ac
+        f_s =  np.linspace(xmin, xmax, points)
+        phi_ac = np.linspace(0.04, 0.08,5)
+        gain = []
+        for value in phi_ac:
+            self.amp.phi_ac = value
+            gain_temp = []
+            for freq in f_s:
+                gain_temp.append(10*np.log10(abs(self.amp.reflection(freq*1e9))**2.))
+            gain.append(gain_temp)
+        self.amp.phi_ac = backup_phi_ac
+
+        fig, ax = plt.subplots(figsize = (8,5))
+
+        for i in np.arange(len(phi_ac)):
+            ax.plot(f_s,gain[i], label = '$\Phi_\mathrm{{AC}}$ = {:0.2f} $\phi_0$'.format(phi_ac[i]))
+        ax.set_ylabel('Gain (dB)', fontsize = 18)
+        plt.legend(loc='upper right')
+
+
+        ax.set_xlim([xmin,xmax])
+        ax.set_ylim([ymin,ymax])
+        ax.set_xlabel('Signal Frequency (GHz)', fontsize = 18)
+        ax.set_title(self.format_amp_inputs(block=['phi_s', 'theta_p', 'phi_ac']))
         return fig
