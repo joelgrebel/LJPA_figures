@@ -59,7 +59,7 @@ class Trends(object):
                 phi_ac = ' $\Phi_\mathrm{{ac}}$ = {:0.2f} $\phi_0$ '.format(value)
                 inputs += phi_ac
             elif name == 'theta_p':
-                theta_p = ' $ \theta_\mathrm{{p}}$ = {:0.2f} rad '.format(value)
+                theta_p = r' $ \theta_\mathrm{{p}}$ = {:0.2f} rad '.format(value)
                 inputs += theta_p
             elif name == 'f_p':
                 if value==None:
@@ -593,7 +593,7 @@ class Trends(object):
                                                 'phi_dc']))
         return fig
 
-    def gain_vs_power_freq_plot(self, xmin=0.01, xmax = 10.,
+    def gain_vs_phi_s_freq_plot(self, xmin=0.01, xmax = 10.,
                             ymin=4., ymax=10.,
                             pointsx=1e2, pointsy=1e2,
                             vmax=None):
@@ -619,29 +619,29 @@ class Trends(object):
             maximum gain plotted. If None data values determine the range
         """
         backup_phi_s = self.amp.phi_s
-        phi_s = np.linspace(xmin, xmax, pointsx)
-        freq = np.linspace(ymin, ymax, pointsy)
-        power = []
+        phi_s = np.linspace(ymin, ymax, pointsy)
+        freq = np.linspace(xmin, xmax, pointsx)
         gain =[]
-        for f in freq:
-            for value in phi_s:
-                average_v_squared = 0.5*(cst.h/2./cst.e)**2*value**2*(float(f)*1e9)**2
+        dev = []
+        for value in phi_s:
+            for f in freq:
                 self.amp.phi_s = value
-                g = 10*np.log10(abs(self.amp.reflection(float(f)*1e9))**2.)
-                p = 10*np.log10(average_v_squared/abs(self.amp.squid_impedance(float(f)*1e9))/0.001)
-                power.append(p)
-                gain.append(g)
+                gain.append(10*np.log10(abs(self.amp.reflection(float(f)*1e9))**2.))
+        for f in freq:
+            dev.append(self.amp.find_1db_deviation_power(float(f)*1e9, unit='rad'))
         self.amp.phi_s = backup_phi_s
-
         gain = np.flipud(np.asarray(gain).reshape((pointsy,pointsx)))
         fig = plt.subplots(figsize = (8,5))
         ax = plt.subplot(1,1,1)
-        aspect = (power[-1] - power[0])/(ymax - ymin)
+        aspect = (xmax-xmin)/(ymax - ymin)
         p = ax.imshow(gain, cmap=plt.get_cmap('plasma'), interpolation='none',
-                        extent=[power[0],power[-1],ymin,ymax], aspect=aspect, vmax=vmax)
+                        extent=[xmin,xmax,ymin,ymax], aspect=aspect, vmax=vmax)
+        ax.plot(freq, dev, color='w', lw=3)
+        ax.set_xlim([xmin, xmax])
+        ax.set_ylim([ymin, ymax])
         plt.colorbar(p).set_label(label='Gain (dB)',size=18)
-        plt.xlabel('Power (dBm)',fontsize=18)
-        plt.ylabel('Frequency (GHz)',fontsize=18)
+        plt.xlabel('Signal Frequency (GHz)',fontsize=18)
+        plt.ylabel('Signal Phase amplitude (rad)',fontsize=18)
         plt.title(self.format_amp_inputs(block=['phi_s','theta_p']))
         return fig
 
@@ -705,7 +705,8 @@ class Trends(object):
         return fig
 
     def f_s_LJPA_impedance_line_plot(self, xmin = 4, xmax = 8, ymin = None, ymax=None,
-                                points = 1e2, real=True, redline=True):
+                                points = 1e2, real=True, redline=True, acmin=0.04, acmax=0.08,
+                                acpoints=5):
         """
         Return a figure with a plot showing the impedance
         vs. signal frequency with all other parameters constant, including
@@ -722,20 +723,14 @@ class Trends(object):
         """
         backup_phi_ac = self.amp.phi_ac
         f_s =  np.linspace(xmin, xmax, points)
-        phi_ac = np.linspace(0.04, 0.08,5)
+        phi_ac = np.linspace(acmin, acmax, acpoints)
         ri = []
         ii = []
         for value in phi_ac:
             self.amp.phi_ac = value
-            ri_temp = []
-            ii_temp = []
-            for freq in f_s:
-                real_impedance = np.real(self.amp.impedance(freq*1e9))
-                imag_impedance = np.imag(self.amp.impedance(freq*1e9))
-                ri_temp.append(real_impedance)
-                ii_temp.append(imag_impedance)
-            ri.append(ri_temp)
-            ii.append(ii_temp)
+            ri.append(np.real(self.amp.impedance(f_s*1e9)))
+            ii.append(np.imag(self.amp.impedance(f_s*1e9)))
+            print 'running phi_ac = ', value
         self.amp.phi_ac = backup_phi_ac
 
         fig, ax = plt.subplots(figsize = (8,5))
@@ -747,7 +742,7 @@ class Trends(object):
             for i in np.arange(len(phi_ac)):
                 ax.plot(f_s,ri[i], label = '$\Phi_\mathrm{{AC}}$ = {:0.2f} $\phi_0$'.format(phi_ac[i]))
             ax.set_ylabel('Real Impedance (Ohms)', fontsize = 18)
-            plt.legend(loc='lower right')
+            plt.legend(loc='upper left')
 
         else:
             if redline and self.amp.f_p != None:
@@ -765,7 +760,8 @@ class Trends(object):
         ax.set_title(self.format_amp_inputs(block=['phi_s', 'theta_p', 'phi_ac']))
         return fig
     def f_s_LJPA_gain_line_plot(self, xmin = 4, xmax = 8, ymin = None, ymax=None,
-                                points = 1e2, redline=True):
+                                points = 1e2, redline=True, acmin=0.04, acmax=0.08,
+                                acpoints=5):
         """
         Return a figure with a plot showing the impedance
         vs. signal frequency with all other parameters constant, including
@@ -782,20 +778,18 @@ class Trends(object):
         """
         backup_phi_ac = self.amp.phi_ac
         f_s =  np.linspace(xmin, xmax, points)
-        phi_ac = np.linspace(0.04, 0.08,5)
+        phi_ac = np.linspace(acmin, acmax, acpoints)
         gain = []
         for value in phi_ac:
             self.amp.phi_ac = value
-            gain_temp = []
-            for freq in f_s:
-                gain_temp.append(10*np.log10(abs(self.amp.reflection(freq*1e9))**2.))
-            gain.append(gain_temp)
+            gain.append(10*np.log10(abs(self.amp.reflection(f_s*1e9))**2.))
+            print 'running phi_ac = ', value
         self.amp.phi_ac = backup_phi_ac
 
         fig, ax = plt.subplots(figsize = (8,5))
 
         for i in np.arange(len(phi_ac)):
-            ax.plot(f_s,gain[i], label = '$\Phi_\mathrm{{AC}}$ = {:0.2f} $\phi_0$'.format(phi_ac[i]))
+            ax.plot(f_s,gain[i], label = '$\Phi_\mathrm{{AC}}$ = {:0.3f} $\phi_0$'.format(phi_ac[i]))
         ax.set_ylabel('Gain (dB)', fontsize = 18)
         plt.legend(loc='upper right')
 
