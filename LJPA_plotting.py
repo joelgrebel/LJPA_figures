@@ -56,7 +56,7 @@ class Trends(object):
                 phi_dc = ' $\Phi_\mathrm{{dc}}$ = {:0.2f} $\phi_0$ '.format(value)
                 inputs += phi_dc
             elif name == 'phi_ac':
-                phi_ac = ' $\Phi_\mathrm{{ac}}$ = {:0.2f} $\phi_0$ '.format(value)
+                phi_ac = ' $\Phi_\mathrm{{ac}}$ = {:0.3f} $\phi_0$ '.format(value)
                 inputs += phi_ac
             elif name == 'theta_p':
                 theta_p = r' $ \theta_\mathrm{{p}}$ = {:0.2f} rad '.format(value)
