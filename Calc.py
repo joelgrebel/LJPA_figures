@@ -1,3 +1,4 @@
+import numpy as np
 
 class Calc(object):
 
@@ -67,4 +68,31 @@ class Calc(object):
                 else:
                     f_p = ' $ \mathrm{{f}}_\mathrm{{p}} = {:0.2f} $ GHz'.format(value/1e9)
                 inputs += f_p
+
         return inputs
+
+
+
+    def bandwidth(self, f, p, bwpower):
+        """
+        Return the bandwidth of the resonance at a given power.
+        Assumes that gain is distributed in a positive resonance peak.
+
+        Parameters
+        ----------
+        f : list
+            list of frequencies
+        p : list
+            list of powers
+        bwpower : float
+            The power at which we are measuring the bandwidth
+        """
+        if len(f) != len(p):
+            raise ValueError("length of f and p must match")
+
+        pg = np.where(p>bwpower)
+        #find first and last frequency with power greater than bwpower
+        f1 = f[pg[0][0]]
+        f2 = f[pg[0][-1]]
+
+        return f2 - f1
