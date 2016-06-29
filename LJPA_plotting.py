@@ -798,3 +798,32 @@ class Trends(Calc):
         ax.set_title(self.format_amp_inputs(block=['phi_s', 'theta_p', 'phi_ac']))
 
         return fig
+
+
+
+    def gain_impedance(self, fmin=5, fmax=7, fpoints=1e2, gmin=None, gmax=None, rmin=None,
+                        rmax=None, imin=None, imax=None, redline=True):
+        f = np.linspace(fmin,fmax,fpoints)
+        power = 10*np.log10(abs(self.amp.reflection(f*1e9))**2)
+        z = self.amp.impedance(f*1e9)
+        ri = np.real(z)
+        ii = np.imag(z)
+        fig, (ax1, ax2, ax3) = plt.subplots(3, 1, sharex=True, figsize=(8,5))
+        if redline:
+            ax2.plot([f[0], f[-1]], [-50., -50.], color='r', linestyle='--')
+            ax3.plot([f[0], f[-1]], [0., 0.], color='r', linestyle='--')
+        ax1.plot(f, power)
+        ax1.set_ylabel('Gain (dB)')
+        ax1.set_ylim([gmin, gmax])
+        ax2.plot(f, ri)
+
+        ax2.set_ylabel('Real Imp. (Ohms)')
+        ax2.set_ylim([rmin, rmax])
+        ax3.plot(f,ii)
+
+        ax3.set_ylim([imin, imax])
+        ax3.set_ylabel('Imag. Imp. (Ohms)')
+        ax3.set_xlabel('Signal Frequency (GHz)')
+        ax1.set_title(self.format_amp_inputs())
+
+        return fig
