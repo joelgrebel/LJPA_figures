@@ -69,9 +69,8 @@ class Trends(object):
                 inputs += f_p
         return inputs
 
-    def power(self, phi_s, freq):
-        average_v_squared = 0.5*(cst.h/2./cst.e)**2*phi_s**2*freq**2
-        power = 10*np.log10(average_v_squared/abs(self.amp.squid_impedance(freq))/0.001)
+
+
     def resonance_plot(self, span=8e9, redline=False, xlim=None):
         """
         Return a figure with two plots showing the amplifier real impedance vs.
