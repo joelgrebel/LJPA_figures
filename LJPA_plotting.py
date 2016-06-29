@@ -87,6 +87,7 @@ class Trends(object):
             two value list [xmin, xmax] to specify plot limits. If None, the
             function plots a span around the resonance frequency.
         """
+
         if not xlim:
             f0 = self.amp.resonance_frequency()
             fmin = (f0 - span/2)/1e9
@@ -121,7 +122,10 @@ class Trends(object):
         ax2.set_ylabel('Reactance($\Omega$)', fontsize = 18)
 
         ax.set_title(self.format_amp_inputs())
+
         return fig
+
+
 
     def phi_ac_gain_line_plot(self, xmin = 0.01, xmax = 0.5,
                                 points = 1e2,
@@ -141,6 +145,7 @@ class Trends(object):
         redline : bool, optional
             If true shows line at maximum gain
         """
+
         backup_phi_ac = self.amp.phi_ac
         phi_ac = np.linspace(xmin, xmax, points)
         max_gain = []
@@ -165,7 +170,10 @@ class Trends(object):
         ax.set_ylabel('Max Gain (dB)', fontsize = 18)
 
         ax.set_title(self.format_amp_inputs(block=['phi_s','theta_p', 'phi_ac']))
+
         return fig
+
+
 
     def phi_dc_f0_line_plot(self, xmin = -0.1, xmax = 0.4,
                                 points = 1e2):
@@ -182,6 +190,7 @@ class Trends(object):
         points : float, optional
             number of plotted points
         """
+
         backup_phi_dc = self.amp.phi_dc
         phi_dc =  np.linspace(xmin, xmax, points)
         f_0 = []
@@ -200,7 +209,10 @@ class Trends(object):
         ax.set_xlabel('$\phi_{DC}$($\phi_0$)', fontsize = 18)
         ax.set_ylabel('$f_0$(GHz)', fontsize = 18)
         ax.set_title(self.format_amp_inputs(block=['phi_s', 'theta_p', 'phi_dc']))
+
         return fig
+
+
 
     def phi_dc_f0_gain_plot(self, xmin=-0.05, xmax = 0.3,
                             ymin=5, ymax=10,
@@ -223,6 +235,7 @@ class Trends(object):
         vmax : float, optional
             maximum gain plotted. If None data values determine the range
         """
+
         backup_phi_dc = self.amp.phi_dc
         phi_dc = np.linspace(xmin,xmax,pointsx)
         f = np.linspace(ymin,ymax,pointsy)
@@ -247,7 +260,10 @@ class Trends(object):
         ax.set_xlabel('$\Phi_{DC} (\phi_0)$',fontsize=18)
         ax.set_ylabel('Signal Frequency (GHz)',fontsize=18)
         ax.set_title(self.format_amp_inputs(block=['phi_s', 'theta_p', 'phi_dc']))
+
         return fig
+
+
 
     def phi_dc_phi_ac_gain_plot(self, freq = 6., xmin=0.1, xmax = 0.4,
                             ymin=0.01, ymax=0.3,
@@ -272,6 +288,7 @@ class Trends(object):
         vmax : float, optional
             maximum gain plotted. If None data values determine the range
         """
+
         backup_phi_dc = self.amp.phi_dc
         backup_phi_ac = self.amp.phi_ac
         phi_dc = np.linspace(xmin, xmax, pointsx)
@@ -299,7 +316,10 @@ class Trends(object):
         plt.ylabel('$\Phi_{AC}(\phi_0)$',fontsize=18)
         plt.title(self.format_amp_inputs(block=['phi_s','theta_p', 'phi_ac',
                                                 'phi_dc']) + ', f = {0} GHz'.format(freq))
+
         return fig
+
+
 
     def phi_dc_f0_phase_plot(self, xmin=-0.05, xmax = 0.3,
                             ymin=5, ymax=10,
@@ -319,6 +339,7 @@ class Trends(object):
         pointsy : float, optional
             number of plotted frequency points
         """
+
         backup_phi_dc = self.amp.phi_dc
         phi_dc = np.linspace(xmin,xmax,pointsx)
         f = np.linspace(ymin,ymax,pointsy)
@@ -345,7 +366,10 @@ class Trends(object):
         ax.set_xlabel('$\Phi_{DC} (\phi_0)$',fontsize=18)
         ax.set_ylabel('Signal Frequency (GHz)',fontsize=18)
         ax.set_title(self.format_amp_inputs(block=['theta_p', 'phi_dc']))
+
         return fig
+
+
 
     def phi_dc_phi_ac_bandwidth_plot(self, freq = 6., xmin=0.1, xmax = 0.4,
                             ymin=0.01, ymax=0.3,
@@ -368,6 +392,7 @@ class Trends(object):
         pointsy : float, optional
             number of plotted phi_ac points
         """
+
         backup_phi_dc = self.amp.phi_dc
         backup_phi_ac = self.amp.phi_ac
         phi_dc = np.linspace(xmin, xmax, pointsx)
@@ -397,7 +422,11 @@ class Trends(object):
         plt.ylabel('$\Phi_{AC}(\phi_0)$',fontsize=18)
         plt.title(self.format_amp_inputs(block=['phi_s','theta_p', 'phi_ac',
                                                 'phi_dc']))
+
         return fig
+
+
+
     def phi_dc_phi_ac_gain_bandwidthcontours_plot(self, freq = 6., xmin=0.1, xmax = 0.4,
                             ymin=0.01, ymax=0.3,
                             pointsx=1e2, pointsy=1e2,
@@ -421,6 +450,7 @@ class Trends(object):
         vmax : float, optional
             maximum gain plotted. If None data values determine the range
         """
+
         backup_phi_dc = self.amp.phi_dc
         backup_phi_ac = self.amp.phi_ac
         phi_dc = np.linspace(xmin, xmax, pointsx)
@@ -454,7 +484,10 @@ class Trends(object):
         plt.ylabel('$\Phi_{AC}(\phi_0)$',fontsize=18)
         plt.title(self.format_amp_inputs(block=['phi_s','theta_p', 'phi_ac',
                                                 'phi_dc']) + ', f = {0} GHz'.format(freq))
+
         return fig
+
+
 
     def phi_s_josephson_inductance_line_plot(self, xmin = 0.01, xmax = 1e1,
                                 pointsx = 1e2, freq=6e9):
@@ -471,6 +504,7 @@ class Trends(object):
         points : float, optional
             number of plotted points
         """
+
         backup_phi_s = self.amp.phi_s
         phi_s = np.linspace(xmin, xmax, pointsx)
 
@@ -497,7 +531,10 @@ class Trends(object):
         ax.set_ylabel('$\mathrm{{L}}_\mathrm{{j}}$(H)', fontsize = 18)
 
         ax.set_title(self.format_amp_inputs(block=['theta_p','phi_s']) + ', f = {0} GHz'.format(freq/1e9), y=1.03)
+
         return fig
+
+
 
     def phi_s_pumpistor_inductance_line_plot(self, xmin = 0.01, xmax = 1e1,
                                 pointsx = 1e2, freq=6e9):
@@ -512,6 +549,7 @@ class Trends(object):
         points : float, optional
             number of plotted points
         """
+
         backup_phi_s = self.amp.phi_s
         phi_s = np.linspace(xmin, xmax, pointsx)
 
@@ -538,7 +576,10 @@ class Trends(object):
         ax2.set_ylabel('Imaginary $\mathrm{{L}}_\mathrm{{p}}$(H)', fontsize = 18)
 
         ax1.set_title(self.format_amp_inputs(block=['theta_p','phi_s']) + ', f = {0} GHz'.format(freq/1e9), y=1.08)
+
         return fig
+
+
 
     def phi_dc_phi_ac_L_p_plot(self, freq = 6., xmin=0.01, xmax = 0.5,
                             ymin=0.01, ymax=0.5,
@@ -561,6 +602,7 @@ class Trends(object):
         pointsy : float, optional
             number of plotted phi_ac points
         """
+
         backup_phi_dc = self.amp.phi_dc
         backup_phi_ac = self.amp.phi_ac
         phi_dc = np.linspace(xmin, xmax, pointsx)
@@ -590,7 +632,10 @@ class Trends(object):
         plt.ylabel('$\Phi_{AC}(\phi_0)$',fontsize=18)
         plt.title(self.format_amp_inputs(block=['phi_s','theta_p', 'phi_ac',
                                                 'phi_dc']))
+
         return fig
+
+
 
     def gain_vs_phi_s_freq_plot(self, xmin=0.01, xmax = 10.,
                             ymin=4., ymax=10.,
@@ -617,6 +662,7 @@ class Trends(object):
         vmax : float, optional
             maximum gain plotted. If None data values determine the range
         """
+
         backup_phi_s = self.amp.phi_s
         phi_s = np.linspace(ymin, ymax, pointsy)
         freq = np.linspace(xmin, xmax, pointsx)
@@ -642,7 +688,10 @@ class Trends(object):
         plt.xlabel('Signal Frequency (GHz)',fontsize=18)
         plt.ylabel('Signal Phase amplitude (rad)',fontsize=18)
         plt.title(self.format_amp_inputs(block=['phi_s','theta_p']))
+
         return fig
+
+
 
     def phi_dc_phi_ac_impedance_plot(self, freq = 6., xmin=0.01, xmax = 0.5,
                             ymin=0.01, ymax=0.5,
@@ -665,6 +714,7 @@ class Trends(object):
         pointsy : float, optional
             number of plotted phi_ac points
         """
+
         backup_phi_dc = self.amp.phi_dc
         backup_phi_ac = self.amp.phi_ac
         phi_dc = np.linspace(xmin, xmax, pointsx)
@@ -701,7 +751,10 @@ class Trends(object):
         plt.ylabel('$\Phi_{AC}(\phi_0)$',fontsize=18)
         plt.title(self.format_amp_inputs(block=['phi_s','theta_p', 'phi_ac',
                                                 'phi_dc'])+ ', f = {0} GHz'.format(freq), y=1.06)
+
         return fig
+
+
 
     def f_s_LJPA_impedance_line_plot(self, xmin = 4, xmax = 8, ymin = None, ymax=None,
                                 points = 1e2, real=True, redline=True, acmin=0.04, acmax=0.08,
@@ -720,6 +773,7 @@ class Trends(object):
         points : float, optional
             number of plotted points
         """
+
         backup_phi_ac = self.amp.phi_ac
         f_s =  np.linspace(xmin, xmax, points)
         phi_ac = np.linspace(acmin, acmax, acpoints)
@@ -757,7 +811,11 @@ class Trends(object):
         ax.set_ylim([ymin,ymax])
         ax.set_xlabel('Signal Frequency (GHz)', fontsize = 18)
         ax.set_title(self.format_amp_inputs(block=['phi_s', 'theta_p', 'phi_ac']))
+
         return fig
+
+
+
     def f_s_LJPA_gain_line_plot(self, xmin = 4, xmax = 8, ymin = None, ymax=None,
                                 points = 1e2, redline=True, acmin=0.04, acmax=0.08,
                                 acpoints=5):
@@ -775,6 +833,7 @@ class Trends(object):
         points : float, optional
             number of plotted points
         """
+
         backup_phi_ac = self.amp.phi_ac
         f_s =  np.linspace(xmin, xmax, points)
         phi_ac = np.linspace(acmin, acmax, acpoints)
@@ -797,4 +856,5 @@ class Trends(object):
         ax.set_ylim([ymin,ymax])
         ax.set_xlabel('Signal Frequency (GHz)', fontsize = 18)
         ax.set_title(self.format_amp_inputs(block=['phi_s', 'theta_p', 'phi_ac']))
+
         return fig
